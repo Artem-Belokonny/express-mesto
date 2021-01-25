@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Card = require('../models/card');
 
 const getCards = (req, res) => {
@@ -12,15 +13,27 @@ const getCards = (req, res) => {
 
 const createCard = (req, res) => {
   const { name, link } = req.body;
-  Card.create({ name, link })
+  const owner = req.user._id;
+  Card.create({ name, link, owner })
     .then((card) => res.send({ data: card }))
     .catch(() => res.status(400).send({ message: 'Произошла ошибка при отправке данных' }));
 };
 
 const deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.id)
+    .orFail(() => {
+      throw new Error('404');
+    })
     .then((card) => res.send({ data: card }))
-    .catch(() => res.status(500).send({ message: 'На сервере произошла ошибка' }));
+    .catch((err) => {
+      if (err.message === '404') {
+        return res.status(404).send({ message: 'Такой карточки не существует' });
+      }
+      if (err instanceof mongoose.CastError) {
+        return res.status(400).send({ message: 'id карточки не найден' });
+      }
+      return res.status(500).send({ message: 'На сервере произошла ошибка' });
+    });
 };
 
 const likeCard = (req, res) => {
@@ -30,7 +43,7 @@ const likeCard = (req, res) => {
     { new: true },
   )
     .then((card) => res.send({ data: card }))
-    .catch(() => res.status(500).send({ message: 'На сервере произошла ошибка' }));
+    .catch((err) => res.status(400).send({ message: `${err}` }));
 };
 
 const dislikeCard = (req, res) => {
@@ -40,7 +53,7 @@ const dislikeCard = (req, res) => {
     { new: true },
   )
     .then((card) => res.send({ data: card }))
-    .catch(() => res.status(500).send({ message: 'На сервере произошла ошибка' }));
+    .catch((err) => res.status(400).send({ message: `${err}` }));
 };
 
 module.exports = {

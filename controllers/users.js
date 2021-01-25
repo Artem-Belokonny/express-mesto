@@ -27,17 +27,22 @@ const createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
     .then((user) => res.send({ data: user }))
-    .catch(() => res.status(400).send({ message: 'Произошла ошибка при отправке данных' }));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: `${err}` });
+      }
+      return res.status(500).send({ message: err.message });
+    });
 };
 
 const updateUser = (req, res) => {
-  User.findByIdAndUpdate(req.params.id, { name: '' })
+  User.findByIdAndUpdate(req.params.id, { name: '' }, { new: true, runValidators: true })
     .then((user) => res.send({ data: user }))
     .catch(() => res.status(400).send({ message: 'Произошла ошибка при отправке данных' }));
 };
 
 const updateAvatar = (req, res) => {
-  User.findByIdAndUpdate(req.params.id, { avatar: '' })
+  User.findByIdAndUpdate(req.params.id, { avatar: '' }, { new: true, runValidators: true })
     .then((user) => res.send({ data: user }))
     .catch(() => res.status(400).send({ message: 'Произошла ошибка при отправке данных' }));
 };

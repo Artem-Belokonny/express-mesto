@@ -10,13 +10,12 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
   useCreateIndex: true,
   useFindAndModify: false,
+  useUnifiedTopology: true,
 });
 
 const PORT = 3000;
 
-app.use('/', express.static('public'));
 app.use(bodyParser.json());
-app.use('/', router);
 
 app.use((req, res, next) => {
   req.user = {
@@ -24,5 +23,7 @@ app.use((req, res, next) => {
   };
   next();
 });
+
+app.use('/', router);
 
 app.listen(PORT);
