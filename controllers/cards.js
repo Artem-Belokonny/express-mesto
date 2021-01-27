@@ -20,7 +20,7 @@ const createCard = (req, res) => {
 };
 
 const deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.id)
+  Card.findByIdAndRemove(req.params.cardId)
     .orFail(() => {
       throw new Error('404');
     })
@@ -38,22 +38,44 @@ const deleteCard = (req, res) => {
 
 const likeCard = (req, res) => {
   Card.findByIdAndUpdate(
-    req.params.id,
+    req.params.cardId,
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
+    .orFail(() => {
+      throw new Error('404');
+    })
     .then((card) => res.send({ data: card }))
-    .catch((err) => res.status(400).send({ message: `${err}` }));
+    .catch((err) => {
+      if (err.message === '404') {
+        return res.status(404).send({ message: 'Такой карточки не существует' });
+      }
+      if (err instanceof mongoose.CastError) {
+        return res.status(400).send({ message: 'id карточки не найден' });
+      }
+      return res.status(500).send({ message: 'На сервере произошла ошибка' });
+    });
 };
 
 const dislikeCard = (req, res) => {
   Card.findByIdAndUpdate(
-    req.params.id,
+    req.params.cardId,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
+    .orFail(() => {
+      throw new Error('404');
+    })
     .then((card) => res.send({ data: card }))
-    .catch((err) => res.status(400).send({ message: `${err}` }));
+    .catch((err) => {
+      if (err.message === '404') {
+        return res.status(404).send({ message: 'Такой карточки не существует' });
+      }
+      if (err instanceof mongoose.CastError) {
+        return res.status(400).send({ message: 'id карточки не найден' });
+      }
+      return res.status(500).send({ message: 'На сервере произошла ошибка' });
+    });
 };
 
 module.exports = {
